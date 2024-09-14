@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<title>Ladyluckslots Jeopardy Template</title>
+<meta name="description" content="Name on the reskin of this undercover racoon , There’s jelly and no jealousy between these sweet sisters, Pat the rat use a lever to activate this symbol, helping Mr Melger get it twisted, Canny’s small cheese-loving companion" />
+<meta name="ROBOTS" content="NOODP" />
+<meta name="google-site-verification" content="UYS7arlGlbDobqQSsucWwkbZyiC-6_cCWlUn9Eb5b2M" />
+<link rel="shortcut icon" href="/static/1710817524/favicon.ico" type="image/x-icon" />
+<link rel="icon" href="/static/1710817524/favicon.ico" type="image/x-icon" />
+
+
+
+
+
+
+
+    
+
+
+    
+        <meta name="robots" content="noindex">
+    
+
+    
+        <link href="css/reboot.css" rel="stylesheet" type="text/css" media="screen" />
+        <link href="css/play.css" rel="stylesheet" type="text/css" />
+        <link href="css/board_mini.css" rel="stylesheet" type="text/css" media="screen" />
+        <script src="js/board.js"></script>
+    
+
+    <link rel="canonical" href="/play/ladyluckslots" />
+    <script>
+        var modal = function(){}
+
+        var game = {}
+        var mode = "play"
+        var grid = null;
+        var current_cell = null;
+        try {
+            var do_autoplay = parseInt(window.localStorage.getItem("autoplay"))
+        } catch (e) {
+        }
+        do_autoplay = isNaN(do_autoplay) ? true : do_autoplay;
+
+        function getCurrentState(){
+            var teams = [];
+            var teams_dom = document.querySelectorAll(".team");
+            for(var i = 0; i < teams_dom.length; i++){
+                var t = teams_dom[i];
+                var name = t.querySelectorAll(".name")[0].textContent;
+                var points = t.querySelectorAll(".points")[0].textContent;
+                teams[i] = {name: name, points: points}
+            }
+
+            var inerts = {};
+            var inert_dom = document.querySelectorAll(".grid-row-questions .inert");
+            for(var i = 0; i < inert_dom.length; i++){
+                var id = inert_dom[i].getAttribute("id");
+                inerts[id] = true;
+            }
+
+            return {
+                "teams": teams,
+                "inerts": inerts,
+            }
+        }
+
+        function getOldState(){
+            try {
+                var old_state = localStorage.getItem("game-107509192")
+            } catch (e) {
+                return null;
+
+            }
+            if(old_state){
+                return JSON.parse(old_state);
+            }
+            return null;
+        }
+
+        function clearState(){
+            try {
+                localStorage.removeItem("game-107509192");
+            } catch (e) {
+
+            }
+        }
+
+        function resize(){
+            var bbox_teams = getBoundingClientRect(document.getElementById("teams"))
+            var rows = document.querySelectorAll(".grid-row").length;
+            if(bbox_teams.height == 0){
+                var h = window.innerHeight;
+            } else {
+                var h = bbox_teams.top + ((window.innerHeight - bbox_teams.height) / (rows))/4
+            }
+
+            grid.style.height = h + "px";
+            minirender(grid, function(g){
+                g.style.opacity = 1;
+            }, .6);
+        }
+
+        ready(function(){
+            grid = document.querySelectorAll(".grid")[0];
+            window.addEventListener("resize", debounce(resize, 100, false));
+            resize();
+            renderState(initial_state);
+            document.getElementById("team-chooser").focus();
+
+            var active_team_number = 0;
+            var active_team = null;
+            /*
+            on("keyup", "body", function(e){
+            })*/
+
+            function deactiveTeamOnNextClick(e){
+                var t = closest(e.target, ".team");
+                if(t == null || t != active_team){
+                    deactiveTeam();
+                }
+            }
+
+            function deactiveTeam(){
+                var els = document.querySelectorAll(".active-team");
+                for(var i = 0; i < els.length; i++){
+                    els[i].classList.remove("active-team");
+                    els[i].querySelector(".minus").innerText = "-";
+                    els[i].querySelector(".plus").innerText = "+";
+                }
+                window.removeEventListener("click", deactiveTeamOnNextClick)
+                active_team_number = 0;
+                active_team = null;
+            }
+
+            function activateTeam(team){
+                active_team = team;
+                active_team.classList.add("active-team");
+                active_team.querySelector(".minus").innerHTML = "&#8595;";
+                active_team.querySelector(".plus").innerHTML = "&#8593;";
+                window.addEventListener("click", deactiveTeamOnNextClick);
+            }
+
+
+            window.addEventListener("keydown", function(e){
+                var ESC = 27
+                var SPACE = 32
+                var ENTER = 13;
+                var LEFT = 37;
+                var UP = 38;
+                var RIGHT = 39;
+                var DOWN = 40;
+                var on_cell = false;
+                var on_input = false;
+                if(document.activeElement){
+                    on_cell = matches(document.activeElement, ".grid-row-questions .grid-cell");
+                    on_input = matches(document.activeElement, "*[role='textbox']");
+                }
+                var clickable = on_cell && !document.activeElement.classList.contains('empty');
+
+                if(e.altKey && e.keyCode == 65){
+                    do_autoplay = !do_autoplay;
+                    alert("Autoplay is " + (do_autoplay ? "on" : "off"))
+                    try {
+                        window.localStorage.setItem("autoplay", do_autoplay ? "1" : "0")
+                    } catch (e) {
+
+                    }
+                }
+
+                if(!on_input && ((e.keyCode >= 96 && e.keyCode <= 105) || (e.keyCode >=48 && e.keyCode <= 57))){
+                    var n = e.keyCode >= 96 ? e.keyCode - 96 : e.keyCode - 48;
+                    //console.log(n);
+                    active_team_number *= 10;
+                    active_team_number += n;
+                    var tmp = active_team_number;
+                    console.log(active_team_number);
+                    var $teams = document.querySelectorAll("#teams .team");
+                    var $team = $teams[active_team_number - 1];
+                    if(active_team && active_team != $team){
+                        deactiveTeam();
+                        // this got reset by deactiveTeam, which we don't want
+                        active_team_number = tmp;
+                    }
+
+                    if($team){
+                        activateTeam($team)
+                    } else {
+                        active_team_number = 0;
+                    }
+                    //} else {
+                    //    deactiveTeam();
+                    //    active_team_number = 0;
+                    //    active_team = null;
+                    //}
+                }
+
+                if(active_team_number != 0){
+                    if(e.keyCode == ESC){
+                        //active_team_number = 0;
+                        deactiveTeam();
+                        //active_team = null;
+                        e.preventDefault();
+                    } else if(e.keyCode == 38){
+                        // add score
+                        handlePoints.call(active_team.querySelector(".plus"), e);
+                    } else if(e.keyCode == 40){
+                        // subtract score
+                        handlePoints.call(active_team.querySelector(".minus"), e);
+                    }
+                } else if(modal.is_open){
+                    if(e.keyCode == ESC){
+                        e.preventDefault();
+                        modal.hide();
+                    } else if(e.keyCode == SPACE){
+                        e.preventDefault();
+                        modal.reveal();
+                    }
+                } else if(on_cell){
+                    if((e.keyCode == ENTER || e.keyCode == SPACE) && clickable){
+                        e.preventDefault();
+                        var event = document.createEvent('HTMLEvents');
+                        event.initEvent('click', true, false);
+                        document.activeElement.dispatchEvent(event);
+                    } else if(e.keyCode == LEFT){
+                        e.preventDefault();
+                        // find the cell to the left and focus on it
+                        if(document.activeElement.previousElementSibling){
+                            document.activeElement.previousElementSibling.focus();
+                        }
+                    } else if(e.keyCode == RIGHT){
+                        e.preventDefault();
+                        if(document.activeElement.nextElementSibling){
+                            document.activeElement.nextElementSibling.focus();
+                        }
+                    } else if(e.keyCode == UP){
+                        e.preventDefault();
+                        var my_col = indexInParent(document.activeElement);
+                        var previous_row = document.activeElement.parentElement.previousElementSibling;
+                        if(previous_row && previous_row.children[my_col] && matches(previous_row.children[my_col], ".grid-row-questions .grid-cell")){
+                            previous_row.children[my_col].focus();
+                        }
+                    } else if(e.keyCode == DOWN){
+                        e.preventDefault();
+                        var my_col = indexInParent(document.activeElement);
+                        var next_row = document.activeElement.parentElement.nextElementSibling;
+                        if(next_row && next_row.children[my_col] && matches(next_row.children[my_col], ".grid-row-questions .grid-cell")){
+                            next_row.children[my_col].focus();
+                        }
+                    }
+                }
+            }, false);
+
+            var debouncedSaveState = debounce(function(){
+                try {
+                    localStorage.setItem("game-107509192", JSON.stringify(getCurrentState()))
+                } catch (e) {
+
+                }
+            }, 100, false)
+
+            on("keyup change input blur focus", "#teams .name, #teams .points", debouncedSaveState);
+
+            on("click", "#re-init", function(e){
+                e.preventDefault();
+                if(confirm("This will clear the scores and team names, and start a new game. Click OK if you want to do this")){
+                    clearState();
+                    game.init(true);
+                }
+            })
+
+            on("keyup", "#answer-button", function(e){
+                if(e.keyCode == 13){
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    modal.reveal();
+                }
+            });
+            on("click", "#answer-button", function(e){
+                modal.reveal();
+            })
+
+            on("keyup", "#continue-button", function(e){
+                if(e.keyCode == 13){
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    modal.hide();
+                }
+            });
+            on("click", "#continue-button", function(e){
+                modal.hide();
+            })
+
+            on("click", ".grid-row-questions .grid-cell", function(e){
+                current_cell = this;
+                modal.show(this);
+            });
+
+            // prevent the buttons from being highlighted
+            on("mousedown", ".minus, .plus", function(e){
+                e.preventDefault();
+            });
+
+            on("keydown", ".minus, .plus", function(e){
+                if(e.keyCode == 13){
+                    handlePoints.call(this, e);
+                }
+            })
+
+            function handlePoints(e){
+                var $team = closest(this, ".team");
+                var $points = $team.querySelectorAll(".points")[0];
+                var points = parseInt($points.innerText, 10);
+                if(isNaN(points)){
+                    alert("Error! The score for this team is not a number. You need to edit the score and change it to a number.");
+                    return
+                }
+                var active_question = document.querySelectorAll(".active-question .cell-inner")[0];
+                var fallback = document.querySelectorAll(".grid-row-questions .cell-inner")[0];
+                var val = parseInt(active_question ? active_question.innerText : fallback.innerText, 10);
+                if(this.classList.contains("minus")){
+                    val = -val;
+                }
+                $points.innerText = points + val;
+                if(active_question){
+                    document.querySelectorAll(".active-question")[0].classList.add("inert");
+                }
+                debouncedSaveState();
+
+            }
+
+            // handle points clicks
+            on("click", ".minus, .plus", handlePoints);
+        });
+
+    </script>
+
+
+    <style type="text/css">
+    
+
+    </style>
+
+    <script>
+
+    function clearLocalStorage(){
+        for(var i = localStorage.length-1; i >= 0 ; i--){
+            var key = localStorage.key(i);
+            //(key.indexOf("jeopardy-0-") == 0 && localStorage.getItem("jeopardy-0") == "107509192")){
+            if(key.indexOf("jeopardy-107509192") == 0){
+                localStorage.removeItem(key);
+            }
+        }
+    }
+
+    
+        initial_state = {"page": "menu"}
+    
+    try {
+        history.replaceState(initial_state, "JeopardyLabs")
+    } catch (e) {}
+
+    game.first_render = true;
+
+    game.initTeam = function(number_of_teams){
+        document.getElementById("teams").style.display = "flex";
+        var teams = document.querySelectorAll("#teams .team");
+        for(var i = 0; i < number_of_teams; i++){
+            var t = teams[i];
+        }
+    }
+
+    game.init = function(clear){
+        var val = document.querySelectorAll("#options select")[0].value;
+
+        if(isNaN(val)){
+            val = 0
+            do {
+                var n = prompt("Enter the number of teams you have");
+                val = parseInt(n, 10) || 0;
+            } while(val <= 0);
+        }
+
+        renderState({"page": "game"})
+        // add all the teams
+        document.getElementById("teams").style.display = "flex";
+        var teams = document.querySelectorAll("#teams .team");
+        for(var i = 0; i < teams.length; i++){
+            teams[i].style.display = "none";
+        }
+
+        for(var i = 0; i < val; i++){
+            var t = teams[i];
+            if(!t){
+                var t = teams[0].cloneNode(true)
+                teams[0].parentElement.appendChild(t);
+                t.querySelectorAll(".name")[0].textContent = "Team " + (i+1)
+                t.querySelectorAll(".points")[0].textContent = "0"
+            } else {
+                t = teams[i]
+            }
+            t.style.display = "block";
+        }
+
+        var teams = document.querySelectorAll("#teams .team");
+
+        if(game.first_render){
+            var old_state = getOldState();
+            if(old_state){
+                for(var i = 0; i < val; i++){
+                    var t = teams[i];
+                    if(old_state.teams[i]){
+                        var name = old_state.teams[i].name;
+                        var points = old_state.teams[i].points;
+                        t.querySelectorAll(".name")[0].textContent = name
+                        t.querySelectorAll(".points")[0].textContent = points
+                    }
+                }
+
+                // restore the inert questions
+                var inerts = old_state.inerts;
+                for(var id in inerts){
+                    try {
+                        document.getElementById(id).classList.add("inert");
+                        document.getElementById(id).setAttribute("aria-label", "Answered");
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            }
+        } else if(clear){
+            for(var i = 0; i < val; i++){
+                var t = teams[i];
+                t.querySelectorAll(".name")[0].textContent = "Team " + (i+1)
+                t.querySelectorAll(".points")[0].textContent = "0"
+            }
+            removeClass(".inert", "inert");
+        } else { // coming just restore
+
+        }
+
+        resize()
+
+        try {
+            history.pushState({"page": "game"}, "JeopardyLabs");
+        } catch (e) {}
+
+        game.first_render = false;
+        try {
+            document.querySelectorAll(".grid-first-row .grid-cell")[0].focus();
+        } catch(e) {
+
+        }
+    }
+
+    function hideModal(){
+        modal.is_open = false;
+        var div = document.getElementById("question-modal");
+        div.style.display = "none";
+        div.classList.remove("expanded");
+        div.style.borderWidth = "3px";
+        div.querySelectorAll(".modal-inner")[0].innerHTML = "";
+    }
+
+    function renderMenu(){
+        var old_state = getOldState() || !game.first_render
+        if(!game.first_render){
+            document.querySelectorAll("#submit")[0].value = "Continue"
+            document.querySelectorAll("#reset-all")[0].style.display = ""
+        } else if(old_state){
+            document.querySelectorAll("#submit")[0].value = "Continue"
+            document.querySelectorAll("#reset-all")[0].style.display = ""
+            var teams = old_state.teams.length;
+            var chooser = document.getElementById("team-chooser")
+            if(teams > 10){
+                var opt = document.createElement("option");
+                opt.setAttribute("value", teams);
+                opt.textContent = teams + " teams"
+                chooser.insertBefore(opt, document.getElementById("last-option"));
+                //chooser.appendChild(opt);
+            }
+            document.getElementById("team-chooser").value = teams;
+        } else {
+            document.querySelectorAll("#submit")[0].value = "Start"
+            document.querySelectorAll("#reset-all")[0].style.display = "none"
+        }
+    }
+
+
+    function renderState(state){
+        document.querySelectorAll("#options")[0].style.display = "none";
+        document.querySelectorAll("#teams")[0].style.display = "none";
+        document.querySelectorAll("#gameplay")[0].style.filter = "";
+        hideModal();
+
+
+        if(state.page == "menu"){
+            document.querySelectorAll("#options")[0].style.display = "block";
+            renderMenu();
+        } else if(state.page == "game"){
+            document.getElementById("teams").style.display = "";
+            document.querySelectorAll("#gameplay")[0].style.filter = "blur(0px)";
+        } else if(state.page == "slide"){
+            document.getElementById("teams").style.display = "";
+            document.querySelectorAll("#gameplay")[0].style.filter = "blur(0px)";
+            modal.show(document.getElementById(state.cell), true);
+        }
+    }
+
+    window.onpopstate = function(event){
+        renderState(window.history.state);
+    }
+
+    function trimHTML(el){
+        var treeWalker = document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null, false);
+        while(treeWalker.nextNode()){
+            var node = treeWalker.currentNode;
+        }
+        var nodes_to_delete = [];
+        do {
+            var node = treeWalker.currentNode;
+            if(node.nodeType == 3 && (node.data || "").trim() == ""){
+                nodes_to_delete.push(node);
+            } else if(node.tagName == "SCRIPT"){
+
+            } else if (node.tagName == "BR"){
+                nodes_to_delete.push(node);
+            } else if(node.tagName == "P" && (node.innerText || "").trim() == ""){
+                nodes_to_delete.push(node);
+            } else {
+                break;
+            }
+        } while(treeWalker.previousNode())
+        for(var i = 0; i < nodes_to_delete.length; i++){
+            try {
+                nodes_to_delete[i].parentElement.removeChild(nodes_to_delete[i]);
+            } catch (e) {
+                console.log("passing");
+            }
+        }
+    }
+
+    modal.reveal = function(){
+        var q = document.querySelectorAll("#question-modal .question")[0];
+        if(q.style.display == "block"){
+            return;
+        }
+        q.style.display = "block";
+        function scrollTo(element, to, duration) {
+            var start = element.scrollTop,
+                change = to - start,
+                currentTime = 0,
+                increment = 20;
+
+            var animateScroll = function(){
+                currentTime += increment;
+                var val = easeInOutQuad(currentTime, start, change, duration);
+                element.scrollTop = val;
+                if(currentTime < duration) {
+                    setTimeout(animateScroll, increment);
+                } else {
+                    q.focus()
+                }
+            };
+            animateScroll();
+        }
+
+        //t = current time
+        //b = start value
+        //c = change in value
+        //d = duration
+        function easeInOutQuad(t, b, c, d){
+          t /= d/2;
+            if (t < 1) return c/2*t*t + b;
+            t--;
+            return -c/2 * (t*(t-2) - 1) + b;
+        };
+
+        var modal_inner = document.querySelectorAll('#question-modal .modal-inner')[0]
+        var original_val = modal_inner.scrollTop;
+        var start_of_modal = getBoundingClientRect(modal_inner).top;
+        var start_of_question = getBoundingClientRect(q).top;
+        var val = start_of_question - start_of_modal;
+        scrollTo(modal_inner, val, 250)
+
+        setTimeout(function(){
+            q.classList.add("reveal");
+        }, 0)
+
+        document.querySelectorAll(".active-question")[0].classList.add("inert");
+        //document.querySelectorAll('#question-modal .question')[0].focus();
+
+        if(current_cell){
+            current_cell.setAttribute("aria-label", "Answered");
+        }
+
+        autoplay('#question-modal .question')
+    }
+
+    function autoplay(selector, then){
+        setTimeout(function(){
+            if(do_autoplay){
+                var q = document.querySelectorAll(selector)[0];
+                try {
+                    q.querySelectorAll("video, audio")[0].play();
+                } catch (e) {
+
+                }
+
+                try {
+                    var iframe = q.querySelectorAll("iframe")[0]
+                    var src = iframe.getAttribute("src") || "";
+                    var a = document.createElement("a");
+                    a.href = src
+                    if(a.hostname == "www.youtube.com"){
+                        a.search = (a.search || "?") + '&autoplay=1'
+                        var iframe_clone = iframe.cloneNode(true);
+                        //iframe.contentWindow.location.replace(a.toString());
+                        //debugger;
+                        var allow = iframe.getAttribute("allow") || ""
+                        iframe_clone.setAttribute("allow", allow + ";autoplay;fullscreen")
+                        iframe_clone.setAttribute('src', a.toString());
+                        iframe.parentElement.replaceChild(iframe_clone, iframe);
+                    }
+                } catch (e) {
+                    // ?
+                }
+            }
+            if(then){
+                then();
+            }
+        }, 500);
+    }
+
+    modal.show = function(cell, no_push_state){
+        removeClass(".active-question", "active-question");
+        cell.classList.add("active-question");
+
+        var row = cell.getAttribute("data-row");
+        var col = cell.getAttribute("data-col");
+        var category = document.querySelectorAll(".grid-row-cats .cat-cell")[col].innerText;
+        var points = cell.querySelectorAll(".cell-inner")[0].innerText;
+        document.querySelectorAll("#question-title")[0].innerText = category + " for " + points
+
+        var bbox = cell.getBoundingClientRect();
+        var div_modal = document.getElementById('question-modal')
+        div_modal.style.display = "block";
+        div_modal.style.opacity = 0;
+
+        var inner = document.querySelectorAll("#question-modal .modal-inner")[0];
+        inner.innerHTML = cell.querySelectorAll(".answer")[0].outerHTML + "\n" + cell.querySelectorAll(".question")[0].outerHTML;
+        var images = inner.querySelectorAll("img");
+        for(var i = 0; i < images.length; i++){
+            var img = images[i];
+            if(img.style.width == "" && img.style.height == ""){
+                img.style.width = "auto";
+                img.style.height = "auto";
+                img.style.maxWidth = "100%";
+                img.style.maxHeight = "100%";
+            }
+        }
+
+        if(!no_push_state){
+            try {
+                console.log("pre length", window.history.length);
+                history.pushState({"page": "slide", "cell": cell.getAttribute("id")}, "JeopardyLabs");
+                console.log("post length", window.history.length);
+            } catch (e) {
+
+            }
+        }
+
+        autoplay('#question-modal .answer', function(){
+            try {
+                document.querySelectorAll('#question-modal .answer')[0].focus();
+            } catch (e) {
+
+            }
+        })
+
+        document.querySelectorAll('#question-modal .modal-body .modal-inner')[0].scrollTop = 0;
+
+        trimHTML(document.querySelectorAll('#question-modal .answer')[0]);
+        trimHTML(document.querySelectorAll('#question-modal .question')[0]);
+
+        // the height of the contents of the modal should be...
+        /* [MODAL HEADER]
+         *     ^
+         *     |
+         *     |    <--- this tall
+         *     v
+         * [TEAMS BAR]
+         */
+        var content_bbox = getBoundingClientRect(document.querySelectorAll('#question-modal .modal-body')[0])
+        var position_of_top = content_bbox.top;
+        var teams = document.querySelectorAll("#teams")[0]
+        var position_of_bottom = getBoundingClientRect(teams).top || window.innerHeight;
+        var h = position_of_bottom - position_of_top - 20 // 20 pixels for some extra room
+
+        document.querySelectorAll('#question-modal .modal-inner')[0].style.maxHeight = h + "px";
+        document.querySelectorAll('#question-modal .modal-body')[0].style.height = h + "px";
+
+
+        var q = document.querySelectorAll("#question-modal .question")[0];
+        q.style.display = "block";
+        var content = document.querySelectorAll('#question-modal .modal-inner')[0];
+        var result = shrink_in_place(content, 100, 24);
+        q.style.display = "none";
+
+
+        div_modal.style.transform = "translate(" + bbox.left + "px, " + bbox.top  + "px) scale(" + (bbox.width/window.innerWidth) + ", " + (bbox.height / window.innerHeight) + ")"
+        div_modal.style.opacity = 1;
+
+        removeClass(".expanded", "expanded");
+
+        setTimeout(function(){
+            div_modal.classList.add("expanded");
+            div_modal.style.top = 0;
+            div_modal.style.left = 0;
+            div_modal.style.bottom = 0;
+            div_modal.style.right = 0;
+            div_modal.style.width = "100%";
+            div_modal.style.height = "100%";
+            div_modal.style.borderWidth = 0;
+            div_modal.style.transform = "translate(0px, 0px) scale(1)"
+        }, 50);
+        modal.is_open = true; // flag for the keyboard event
+        document.querySelectorAll(".grid")[0].setAttribute("aria-hidden", "true");
+
+    }
+
+    modal.hide = function(){
+        document.querySelectorAll(".grid")[0].setAttribute("aria-hidden", "false");
+        backToGame()
+        renderState({"page": "game"});
+        if(current_cell){
+            current_cell.focus()
+        }
+    }
+
+    function backToGame(){
+        var state = window.history.state;
+        if(state.page == "slide"){
+            window.history.go(-1);
+        }
+    }
+
+    function backToMenu(){
+        renderState({"page": "menu"});
+        var state = window.history.state;
+        if(state.page == "slide"){
+            window.history.go(-2);
+        } else if(state.page == "game"){
+            window.history.go(-1);
+        }
+        document.getElementById("team-chooser").focus();
+    }
+    </script>
+
+
+
+
+
+</head>
+
+<body>
+
+
+    <div id="gameplay">
+    <div class="grid-container">
+    	        <div class="navbar">
+					<img src="image.jpg" alt="Logo">
+        		</div>
+    <div class="content-row" >
+    		   <div class="sidebar-left">
+                
+               </div>
+    <div class="main-container" >
+        <div class="grid grid-play " style="margin-left:25%" " role="table" aria-label="Game Board">
+    <div class="grid-row grid-row-cats" style="" role="row">
+        
+            <div class="grid-cell " data-row="0" data-col="0">
+                <div class="cell">
+                    <div class="cell-inner cat-cell" role="columnheader">Hacksaw</div>
+                </div>
+            </div>
+        
+            <div class="grid-cell " data-row="0" data-col="1">
+                <div class="cell">
+                    <div class="cell-inner cat-cell" role="columnheader">Pragmatic</div>
+                </div>
+            </div>
+        
+            <div class="grid-cell " data-row="0" data-col="2">
+                <div class="cell">
+                    <div class="cell-inner cat-cell" role="columnheader">Nolimit City<br></div>
+                </div>
+            </div>
+        
+            <div class="grid-cell " data-row="0" data-col="3">
+                <div class="cell">
+                    <div class="cell-inner cat-cell" role="columnheader">Relax Gaming<br></div>
+                </div>
+            </div>
+        
+            <div class="grid-cell " data-row="0" data-col="4">
+                <div class="cell">
+                    <div class="cell-inner cat-cell" role="columnheader">Push Gaming<br></div>
+                </div>
+            </div>
+        
+    </div>
+
+    
+        <div class="grid-row grid-row-questions  grid-first-row"
+             role="row"
+
+            >
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752488"
+                tabindex="0"
+                
+                    aria-label="10"
+                
+                data-row="1" data-col="0">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Hacksaw">10</div>
+                                <div class="front answer" tabindex="0"><p><strong>Name on the reskin</strong> of this undercover racoon&nbsp;</p></div>
+                                <div class="back question" tabindex="0"><p>Ze zeus</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752498"
+                tabindex="0"
+                
+                    aria-label="10"
+                
+                data-row="1" data-col="1">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Pragmatic">10</div>
+                                <div class="front answer" tabindex="0"><p>A celestial battle between Heaven and Hell, but no bearded dudes are included this time</p></div>
+                                <div class="back question" tabindex="0"><p>angel vs sinner</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752508"
+                tabindex="0"
+                
+                    aria-label="10"
+                
+                data-row="1" data-col="2">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Nolimit City
+">10</div>
+                                <div class="front answer" tabindex="0"><p>The ambiance of this city is perfect for falling in love with your captor</p></div>
+                                <div class="back question" tabindex="0"><p>Stockholm</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752518"
+                tabindex="0"
+                
+                    aria-label="10"
+                
+                data-row="1" data-col="3">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Relax Gaming
+">10</div>
+                                <div class="front answer" tabindex="0"><p>The monkey mafia are back and they’re out to make bank</p></div>
+                                <div class="back question" tabindex="0"><p>Banana town</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752528"
+                tabindex="0"
+                
+                    aria-label="10"
+                
+                data-row="1" data-col="4">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Push Gaming
+">10</div>
+                                <div class="front answer" tabindex="0"><p>In many ways Golden grills help this fish bite even harder and deeper </p></div>
+                                <div class="back question" tabindex="0"><p>Razor ways</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+        </div>
+    
+        <div class="grid-row grid-row-questions  "
+             role="row"
+
+            >
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752490"
+                tabindex="0"
+                
+                    aria-label="20"
+                
+                data-row="2" data-col="0">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Hacksaw">20</div>
+                                <div class="front answer" tabindex="0"><p>There’s jelly and no jealousy between these sweet sisters</p></div>
+                                <div class="back question" tabindex="0"><p>jelly slice</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752500"
+                tabindex="0"
+                
+                    aria-label="20"
+                
+                data-row="2" data-col="1">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Pragmatic">20</div>
+                                <div class="front answer" tabindex="0"><p>A red deer, a blue bear, and a green wolf are the victims of this goddess of the hunt</p></div>
+                                <div class="back question" tabindex="0"><p>Artemis</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752510"
+                tabindex="0"
+                
+                    aria-label="20"
+                
+                data-row="2" data-col="2">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Nolimit City
+">20</div>
+                                <div class="front answer" tabindex="0"><p>The classic rivalry between East and West becomes a thing of the past when this super bonus is achieved.</p></div>
+                                <div class="back question" tabindex="0"><p>Coast to coast bonus</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752520"
+                tabindex="0"
+                
+                    aria-label="20"
+                
+                data-row="2" data-col="3">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Relax Gaming
+">20</div>
+                                <div class="front answer" tabindex="0"><p>Who comes after me? Well, after getting two books, it's me, but cooler.</p></div>
+                                <div class="back question" tabindex="0"><p>Book of power</p><p><br></p><p><br></p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752530"
+                tabindex="0"
+                
+                    aria-label="20"
+                
+                data-row="2" data-col="4">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Push Gaming
+">20</div>
+                                <div class="front answer" tabindex="0"><p>A mystery stack made of this plant can reveal the path to the deep sea</p></div>
+                                <div class="back question" tabindex="0"><p>Seaweed</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+        </div>
+    
+        <div class="grid-row grid-row-questions  "
+             role="row"
+
+            >
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752492"
+                tabindex="0"
+                
+                    aria-label="30"
+                
+                data-row="3" data-col="0">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Hacksaw">30</div>
+                                <div class="front answer" tabindex="0"><p>Pat the rat use a lever to activate this symbol, helping Mr Melger get it twisted</p></div>
+                                <div class="back question" tabindex="0"><p>rotogrid</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752502"
+                tabindex="0"
+                
+                    aria-label="30"
+                
+                data-row="3" data-col="1">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Pragmatic">30</div>
+                                <div class="front answer" tabindex="0"><p>She used to be a golden child, and now she's a golden adult.</p></div>
+                                <div class="back question" tabindex="0"><p>hand of midas 2</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752512"
+                tabindex="0"
+                
+                    aria-label="30"
+                
+                data-row="3" data-col="2">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Nolimit City
+">30</div>
+                                <div class="front answer" tabindex="0"><p>She doesn’t need anything in her mouth just a collar with her name/description to collect all the toilet paper possible</p></div>
+                                <div class="back question" tabindex="0"><p>Karen</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752522"
+                tabindex="0"
+                
+                    aria-label="30"
+                
+                data-row="3" data-col="3">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Relax Gaming
+">30</div>
+                                <div class="front answer" tabindex="0"><p>This symbol changes its purpose with every spin in this popular series, which includes a total of 4 games</p></div>
+                                <div class="back question" tabindex="0"><p>Persistent shapeshifter</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752532"
+                tabindex="0"
+                
+                    aria-label="30"
+                
+                data-row="3" data-col="4">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Push Gaming
+">30</div>
+                                <div class="front answer" tabindex="0"><p>This card symbol is the last to be converted into bamboo to make things ten times better</p></div>
+                                <div class="back question" tabindex="0"><p>Club</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+        </div>
+    
+        <div class="grid-row grid-row-questions  "
+             role="row"
+
+            >
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752494"
+                tabindex="0"
+                
+                    aria-label="40"
+                
+                data-row="4" data-col="0">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Hacksaw">40</div>
+                                <div class="front answer" tabindex="0"><p>Canny’s small cheese-loving companion</p></div>
+                                <div class="back question" tabindex="0"><p>Mona</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752504"
+                tabindex="0"
+                
+                    aria-label="40"
+                
+                data-row="4" data-col="1">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Pragmatic">40</div>
+                                <div class="front answer" tabindex="0"><p>The breed of the dog that stands out between its 4 puppy friends</p></div>
+                                <div class="back question" tabindex="0"><p>Rottweiler</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752514"
+                tabindex="0"
+                
+                    aria-label="40"
+                
+                data-row="4" data-col="2">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Nolimit City
+">40</div>
+                                <div class="front answer" tabindex="0"><p>San Quentin inmate Crazy Joe has a phd in this particular <strong>area</strong></p></div>
+                                <div class="back question" tabindex="0"><p>Veterinarian</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752524"
+                tabindex="0"
+                
+                    aria-label="40"
+                
+                data-row="4" data-col="3">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Relax Gaming
+">40</div>
+                                <div class="front answer" tabindex="0"><p>This Egyptian Pharaoh came back as a mummy to take revenge on every explorer near his tomb</p></div>
+                                <div class="back question" tabindex="0"><p>Ramses</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752534"
+                tabindex="0"
+                
+                    aria-label="40"
+                
+                data-row="4" data-col="4">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Push Gaming
+">40</div>
+                                <div class="front answer" tabindex="0"><p>How many lines or combinations are present in this mesozoic casino game</p></div>
+                                <div class="back question" tabindex="0"><p>576</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+        </div>
+    
+        <div class="grid-row grid-row-questions grid-last-row "
+             role="row"
+
+            >
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752496"
+                tabindex="0"
+                
+                    aria-label="50"
+                
+                data-row="5" data-col="0">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Hacksaw">50</div>
+                                <div class="front answer" tabindex="0"><p>Before passing away, Father and Mother left a note written in ink, giving this name to their mollusk son</p></div>
+                                <div class="back question" tabindex="0"><p>Otto</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752506"
+                tabindex="0"
+                
+                    aria-label="50"
+                
+                data-row="5" data-col="1">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Pragmatic">50</div>
+                                <div class="front answer" tabindex="0"><p>This type of kiss appears when the princess gives you a heart multiplier</p></div>
+                                <div class="back question" tabindex="0"><p>Constellation kiss</p><p><br></p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752516"
+                tabindex="0"
+                
+                    aria-label="50"
+                
+                data-row="5" data-col="2">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Nolimit City
+">50</div>
+                                <div class="front answer" tabindex="0"><p>The cadaver representation of the second-highest symbol came from the crypt to give you the ace of spades</p></div>
+                                <div class="back question" tabindex="0"><p>Lemmy Kilmister</p><p><br></p><p><br></p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752526"
+                tabindex="0"
+                
+                    aria-label="50"
+                
+                data-row="5" data-col="3">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Relax Gaming
+">50</div>
+                                <div class="front answer" tabindex="0"><p>The maximum number of soldiers this ferocious snake can eat before reaching its full size</p></div>
+                                <div class="back question" tabindex="0"><p>22</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="
+                    cell-group
+                    grid-cell
+                    
+                "
+                role="cell"
+                id="cell-3198752536"
+                tabindex="0"
+                
+                    aria-label="50"
+                
+                data-row="5" data-col="4">
+                    
+                        
+                            <div class="cell points" >
+                                <div class="cell-inner" data-category="Push Gaming
+">50</div>
+                                <div class="front answer" tabindex="0"><p>A red jester and the land of the sky had this race against time</p></div>
+                                <div class="back question" tabindex="0"><p>Hipermode</p></div>
+                            </div>
+                        
+                    
+                </div>
+            
+        </div>
+    
+        <div id="question-modal" class="modal-wrapper" role="dialog" aria-label="Prompt" aria-modal="true">
+            <div id="modal-header">
+                <div tabindex="0" role="button" aria-label="Close prompt (escape)" id="continue-button"><div>Continue <kbd>ESC</kbd></div></div>
+                <div id="question-title"></div>
+                <div tabindex="0" role="button" aria-label="Reveal answer (spacebar)" id="answer-button" tabindex="0"><div>Reveal Correct Response <kbd>Spacebar</kbd></div></div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-inner"></div>
+            </div>
+        </div>
+    
+    <!-- end of gameboard container-->
+</div>
+<!-- end of gameboard container-->
+                <!-- 3 additional end if div -->
+                </div>
+                		<div class="sidebar-right">
+              
+            			</div>
+                </div>
+                		<div class="footer">
+         
+        				</div>
+                            
+                </div>
+                <!-- 3 additional end if div -->
+
+
+
+
+        <div id="teams">
+            <a role="button" class="menu-picker" href="javascript:backToMenu('menu')" aria-label="Menu Button">
+                M<br>e<br>n<br>u
+            </a>
+            <div style="display:flex; margin-left:auto; margin-right:auto; overflow:auto;">
+                
+                    <div class="team" style="display:none">
+                        <div class="name" role="textbox" contenteditable="true">Team 1</div>
+                        <div class="points" role="textbox" contenteditable="true">0</div>
+                        <div class="pointer">
+                            <span tabindex="0" aria-label="Add points" role="button" class="plus">+</span>
+                            <span tabindex="0" aria-label="Subtract points" role="button" class="minus">-</span>
+                        </div>
+                    </div>
+                
+            </div>
+        </div>
+
+    </div>
+
+    <div id="options" class="modal-wrapper" role="dialog" aria-label="Menu" aria-modal="true">
+        <div class="modal">
+            
+            <h1>Ladyluckslots</h1>
+
+            <div id="team-chooser-wrapper">
+                <select id="team-chooser">
+                    <option value="0">No teams</option>
+                    
+                </select>
+                <input class="submit" type="button" id="submit" value="Start" onclick="game.init()" />
+                <span id="reset-all">
+                    <input type="button" id="re-init" value="Reset" />
+                </span>
+            </div>
+
+            <p id="fullscreen" style="display:none" align="center"><span id="windows" style="display:none">Press <kbd >F11</kbd></span> <span id="mac" style="display:none">Select menu option <kbd >View &gt; Enter Fullscreen</kbd></span> for full-screen mode</p>
+            <script>
+                if(window.navigator.platform.indexOf("Mac") == 0){
+                    document.getElementById("fullscreen").style.display = "block";
+                    document.getElementById("mac").style.display = "inline";
+                } else if(window.navigator.platform.indexOf("Win") == 0){
+                    document.getElementById("fullscreen").style.display = "block";
+                    document.getElementById("windows").style.display = "inline";
+                }
+            </script>
+
+            <div align="center" id="menu-links">
+                
+                    <a href="/edit/ladyluckslots" rel="nofollow">Edit</a> &bull;
+                    <a href="/print/ladyluckslots" target="_blank">Print</a> &bull;
+                    <a href="/compile/ladyluckslots" rel="nofollow">Download</a> &bull;
+
+                
+            </div>
+        </div>
+    </div>
+    
+        <script src="static/bouncecheck.js" data-settings-url="/account/settings/" data-email="ladyluckslots@protonmail.com" id="script-email-checker"></script>
+    
+    <!--
+    <div class="points-instructions">
+        Use the up/down arrow to add or remove points from the highlighted team. Then press <kbd>ESC</kbd>
+    </div>-->
+
+
+    <div class="sidebar">
+       
+
+    </div>
+    
+        
+
+    
+
+
+
+</body>
+</html>
