@@ -1,0 +1,266 @@
+#test-height {
+    font-family:verdana; /* TODO */
+    padding:0;
+    margin:0;
+    color:black;
+}
+
+* {
+    box-sizing:border-box;
+}
+
+.cell-inner p:last-child {
+    margin-bottom:0;
+}
+
+#grid {
+    transition:opacity 1s;
+}
+
+.grid {
+    /*
+    border:3px solid black;
+    border-top-width:6px;*/
+    /*box-shadow: #ccc 0 0 2px 0*/;
+    padding:10px;
+    background: linear-gradient(to top, #1d2675 0%,#2a3698 100%);
+    position:relative;
+	transition: .1s;
+    z-index:1;
+    transform-origin:center left;
+    font-size:12px;
+    display:flex;
+    height:100vh;
+    flex-direction:column;
+    align-items:stretch;
+
+}
+
+.grid-zoomed {
+    /*transform:scale(2);*/
+    z-index:10;
+}
+
+.click-to-zoom  {
+    opacity:0;
+	transition: .3s;
+    position:absolute;
+    top:0;
+    right:0;
+}
+
+.grid:hover .click-to-zoom {
+    opacity:1;
+}
+
+.grid.grid-zoomed .click-to-zoom {
+    opacity:0;
+}
+
+
+
+.click-to-zoom span {
+    background-color:#ccc;
+    font-size:14px;
+    display:inline-block;
+    padding:3px;
+}
+
+.grid-row {
+    display:flex;
+    flex:1;
+}
+
+/*
+.grid-col {
+    flex-direction:column;
+    display:flex;
+}
+
+.grid-col > div {
+    border:3px solid black;
+}*/
+
+/*
+img, iframe {
+    display:none;
+}*/
+
+.grid-cell {
+    border:3px solid black;
+    overflow:hidden;
+    position:relative;
+    /*cambiar color principal aqui*/
+    background-color:#fa5eff;
+    /*background:linear-gradient(to right, #0000FF, #FF00FF);*/
+	transition: .3s;
+    flex:1;
+}
+
+.grid-cell-zoomed {
+    transform:scale(2);
+    z-index:10;
+}
+
+.grid-preview .grid-row .grid-cell:first-child {
+    transform-origin:left center;
+}
+
+.grid-preview .grid-row .grid-cell:last-child {
+    transform-origin:right center;
+}
+
+.grid-preview .grid-last-row .grid-cell {
+    transform-origin:bottom center;
+}
+
+.grid-preview .grid-last-row .grid-cell:first-child {
+    transform-origin:bottom left;
+}
+
+.grid-preview .grid-last-row .grid-cell:last-child {
+    transform-origin:bottom right;
+}
+
+.grid-last-row {
+    border-bottom:3px solid black;
+}
+
+.grid-first-row {
+    border-top:3px solid black;
+}
+
+.grid-row-questions {
+    border-left:3px solid black;
+    border-right:3px solid black;
+    background-color:black;
+}
+
+.grid-row-cats .grid-cell {
+    border-color:transparent;
+}
+
+.grid-row-cats .cell {
+    /*align-items:flex-end;*/
+}
+
+.grid-row-cats-resize-done {
+    flex:none;
+}
+
+.cell-group {
+    backface-visibility:hidden;
+	transform-style: preserve-3d;
+}
+
+.cell {
+    position:absolute;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color:#4a235a;
+    backface-visibility:hidden;
+	perspective: 1000px;
+	transform-style: preserve-3d;
+    -webkit-perspective: 0;
+    -webkit-backface-visibility: hidden;
+    width:100%;
+    height:100%;
+}
+
+.cell a:link, .cell a:visited, .cell a:hover {
+    color:white;
+}
+
+.cell.back {
+	transform: rotateY(180deg);
+}
+
+.cell.front {
+	z-index:2;
+}
+
+.cell.back, .cell.front {
+    cursor:pointer;
+    overflow:hidden;
+}
+
+.cell.back, .cell.front, .cell-group, .category {
+	transition: .3s;
+    will-change: transform;
+}
+
+.cell-group:hover, .cell-group:focus {
+    border-color:white;
+    outline:none;
+}
+
+.cell-group.inert:hover, .cell-group.inert:focus {
+    border-color:gray;
+    outline:none;
+}
+
+.cell-group:hover .front  {
+	transform: rotateY(180deg);
+}
+
+.cell-group:hover .back  {
+	transform: rotateY(0deg);
+}
+
+.cell-group:hover .back,
+.cell-group:hover .front {
+    border-color:white;
+}
+
+.cell-group:hover .back,
+.cell-group:hover .front {
+	transition: .6s;
+}
+
+.cell-group.empty {
+    pointer-events:none;
+}
+
+.cell-group.empty:hover, .cell-group.empty:focus {
+    /*
+    border-color:black;
+    transform:none;*/
+}
+
+
+/* play mode */
+
+#gameplay .answer:focus, #gameplay .question:focus {
+    outline:none;
+}
+
+.points .front, .points .back {
+    display:none;
+}
+
+.grid-play .cell-group {
+    cursor:pointer;
+}
+
+.grid-play .cell-group:hover, .grid-play .cell-group:focus {
+    /*background-color:rgba(255,255,255, .05);*/
+    background-color:#4a235a;;
+}
+
+.grid-play .cell-group.inert:hover, .grid-play .cell-group.inert:focus {
+    background-color: #4a235a;;
+}
+
+.inert .cell-inner {
+    opacity:.05;
+}
+
+.grid.grid-play {
+    background: none;
+}
+
+.resizing {
+    transition:none !important;
+}
