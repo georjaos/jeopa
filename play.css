@@ -18,11 +18,7 @@ body {
         }
 .navbar {
 
-    background-color:#4a235a;
-    background:#4a235a;
-    color: #4a235a;
-    align-items: center;
-    display: flex;
+
 }
 
         .navbar img {
@@ -31,7 +27,7 @@ body {
         /* Second row grid for sidebar, container, right sidebar */
         .content-row {
             display: grid;
-            grid-template-columns: 8% 100% 20%;
+            grid-template-columns: 5% 100% 20%;
             height: 100%; /* Fill the row height */
         }
 
@@ -317,8 +313,8 @@ h3, .point-cell {
 }
 
 #question-modal {
-    background-color:#4a235a;
-    border:3px solid #ffff00;;
+    background-color:#773891;
+    border:3px solid #ffff00;
     z-index:10;
 }
 
