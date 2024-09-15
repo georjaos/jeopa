@@ -91,7 +91,7 @@ img, iframe {
     overflow:hidden;
     position:relative;
     /*cambiar color principal aqui*/
-    background-color:#fa5eff;
+    background-color:#D200D2;
     /*background:linear-gradient(to right, #0000FF, #FF00FF);*/
 	transition: .3s;
     flex:1;
@@ -159,7 +159,8 @@ img, iframe {
     align-items: center;
     justify-content: center;
     text-align: center;
-    color:#4a235a;
+    /*color letra*/
+    color:white;
     backface-visibility:hidden;
 	perspective: 1000px;
 	transform-style: preserve-3d;
