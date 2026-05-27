@@ -15,10 +15,21 @@
 body {
   min-height: 100vh;
   font-family: Arial, sans-serif;
-  background: #111;
+  background-image: url('./background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
   color: white;
 }
 
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 0;
+}
 
 .game-container {
   position: relative;
@@ -61,4 +72,219 @@ h1 {
   font-weight: bold;
   color: gold;
   border: 2px solid rgba(255,255,255,0.15);
+  transition: 0.2s;
+}
+
+.cell:hover {
+  transform: scale(1.03);
+}
+
+.cell.used {
+  visibility: hidden;
+}
+
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+}
+
+.popup-box {
+  background: #102a83;
+  width: 100%;
+  max-width: 700px;
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.popup-box h2 {
+  margin-bottom: 20px;
+  color: gold;
+}
+
+.popup-box p {
+  font-size: 1.5rem;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+button {
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.reveal-btn {
+  background: gold;
+  color: black;
+}
+
+.close-btn {
+  background: white;
+}
+
+@media(max-width: 768px) {
+  .board {
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game-container">
+  <h1>JEOPARDY</h1>
+
+  <div class="board" id="board"></div>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-box">
+    <h2 id="popup-category"></h2>
+    <p id="popup-question"></p>
+    <p id="popup-answer" style="display:none;color:gold;"></p>
+
+    <div class="buttons">
+      <button class="reveal-btn" id="reveal-btn">Reveal Answer</button>
+      <button class="close-btn" id="close-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const data = [
+  {
+    category: 'History',
+    questions: [
+      { value: 100, question: 'Who discovered America?', answer: 'Christopher Columbus' },
+      { value: 200, question: 'When did WWII end?', answer: '1945' },
+      { value: 300, question: 'First president of the USA?', answer: 'George Washington' },
+      { value: 400, question: 'Who built the Colosseum?', answer: 'Romans' },
+      { value: 500, question: 'Wall that fell in 1989?', answer: 'Berlin Wall' }
+    ]
+  },
+  {
+    category: 'Science',
+    questions: [
+      { value: 100, question: 'Red planet?', answer: 'Mars' },
+      { value: 200, question: 'H2O is?', answer: 'Water' },
+      { value: 300, question: 'Gas plants absorb?', answer: 'Carbon dioxide' },
+      { value: 400, question: 'Force keeping us on Earth?', answer: 'Gravity' },
+      { value: 500, question: 'Center of an atom?', answer: 'Nucleus' }
+    ]
+  },
+  {
+    category: 'Movies',
+    questions: [
+      { value: 100, question: 'Green ogre movie?', answer: 'Shrek' },
+      { value: 200, question: 'Talking snowman movie?', answer: 'Frozen' },
+      { value: 300, question: 'Hero with a shield?', answer: 'Captain America' },
+      { value: 400, question: 'Movie with dinosaurs?', answer: 'Jurassic Park' },
+      { value: 500, question: 'Space saga with Jedi?', answer: 'Star Wars' }
+    ]
+  },
+  {
+    category: 'Geography',
+    questions: [
+      { value: 100, question: 'Largest ocean?', answer: 'Pacific Ocean' },
+      { value: 200, question: 'Capital of Japan?', answer: 'Tokyo' },
+      { value: 300, question: 'Country shaped like a boot?', answer: 'Italy' },
+      { value: 400, question: 'Largest desert?', answer: 'Sahara' },
+      { value: 500, question: 'River in Egypt?', answer: 'Nile' }
+    ]
+  },
+  {
+    category: 'Sports',
+    questions: [
+      { value: 100, question: 'Players in soccer team?', answer: '11' },
+      { value: 200, question: 'Sport with touchdowns?', answer: 'American Football' },
+      { value: 300, question: 'Country that invented basketball?', answer: 'USA' },
+      { value: 400, question: 'Sport using a racket?', answer: 'Tennis' },
+      { value: 500, question: 'Olympic rings?', answer: '5' }
+    ]
+  }
+];
+
+const board = document.getElementById('board');
+const popup = document.getElementById('popup');
+const popupCategory = document.getElementById('popup-category');
+const popupQuestion = document.getElementById('popup-question');
+const popupAnswer = document.getElementById('popup-answer');
+const revealBtn = document.getElementById('reveal-btn');
+const closeBtn = document.getElementById('close-btn');
+
+let activeCell = null;
+
+// categories
+for (const cat of data) {
+  const div = document.createElement('div');
+  div.className = 'category';
+  div.textContent = cat.category;
+  board.appendChild(div);
+}
+
+// question cells
+for (let row = 0; row < 5; row++) {
+  for (const cat of data) {
+    const q = cat.questions[row];
+
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = '$' + q.value;
+
+    cell.onclick = () => {
+      popup.style.display = 'flex';
+      popupCategory.textContent = cat.category;
+      popupQuestion.textContent = q.question;
+      popupAnswer.textContent = 'Answer: ' + q.answer;
+      popupAnswer.style.display = 'none';
+      revealBtn.style.display = 'inline-block';
+      activeCell = cell;
+    };
+
+    board.appendChild(cell);
+  }
+}
+
+revealBtn.onclick = () => {
+  popupAnswer.style.display = 'block';
+  revealBtn.style.display = 'none';
+
+  if (activeCell) {
+    activeCell.classList.add('used');
+  }
+};
+
+closeBtn.onclick = () => {
+  popup.style.display = 'none';
+};
+
+popup.onclick = (e) => {
+  if (e.target === popup) {
+    popup.style.display = 'none';
+  }
+};
+</script>
+
+</body>
 </html>
